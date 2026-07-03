@@ -3,26 +3,29 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Spot Sketch PRO FIX</title>
+<title>Spot Sketch PRO</title>
 
 <style>
-body{
+html, body{
 margin:0;
+padding:0;
+height:100%;
+overflow:hidden;
 font-family:Arial;
 background:#111;
 color:white;
 }
 
-/* TOPBAR (VISSZA NORMÁL MÉRETRE) */
+/* TOPBAR */
 #topbar{
 display:flex;
 gap:10px;
-padding:12px;
+padding:6px 10px;
 background:#0f0f0f;
 width:100%;
 justify-content:center;
 align-items:center;
-font-size:13px;
+font-size:12px;
 flex-wrap:wrap;
 }
 
@@ -30,14 +33,15 @@ input,select,button{
 background:#151515;
 border:1px solid #2a2a2a;
 color:white;
-padding:6px 10px;
+padding:5px 8px;
 border-radius:6px;
-font-size:13px;
+font-size:12px;
 }
 
+/* CANVAS */
 #canvas{
-width:100%;
-height:calc(100vh - 70px);
+width:100vw;
+height:calc(100vh - 52px);
 display:flex;
 justify-content:center;
 align-items:center;
@@ -45,17 +49,17 @@ background:#000;
 overflow:hidden;
 }
 
+/* STAGE */
 #stage{
 position:relative;
 display:inline-block;
-max-width:100%;
-max-height:100%;
 }
 
+/* IMAGE */
 #photo{
 display:block;
-max-width:100%;
-max-height:100vh;
+max-width:100vw;
+max-height:calc(100vh - 52px);
 width:auto;
 height:auto;
 object-fit:contain;
@@ -75,18 +79,19 @@ pointer-events:none;
 position:absolute;
 background:#2f8cff;
 color:white;
-padding:6px 10px;
+padding:5px 8px;
 border-radius:10px;
 font-weight:bold;
 cursor:move;
 user-select:none;
-
 display:flex;
 align-items:center;
 gap:6px;
 line-height:1;
+max-width:120px;
 }
 
+/* DELETE */
 .delete{
 width:16px;
 height:16px;
@@ -99,7 +104,28 @@ display:flex;
 align-items:center;
 justify-content:center;
 font-size:11px;
-line-height:1;
+}
+
+/* MENU */
+#menu{
+position:absolute;
+display:none;
+background:#1a1a1a;
+border:1px solid #333;
+z-index:9999;
+max-height:300px;
+overflow:auto;
+min-width:120px;
+}
+
+.menu-item{
+padding:8px;
+cursor:pointer;
+font-size:12px;
+}
+
+.menu-item:hover{
+background:#2f8cff;
 }
 </style>
 </head>
@@ -122,16 +148,19 @@ line-height:1;
   </div>
 </div>
 
+<div id="menu"></div>
+
 <script>
 const stage = document.getElementById("stage");
 const img = document.getElementById("photo");
+const menu = document.getElementById("menu");
 
 let points = [];
 let click = {x:0,y:0};
 
 /* ISO */
 const isoSel = document.getElementById("iso");
-[100,200,400,800,1600,3200].forEach(v=>{
+[12,25,50,100,200,400,800,1600,3200,6400,12800].forEach(v=>{
 const o=document.createElement("option");
 o.value=v;
 o.textContent="ISO " + v;
@@ -141,7 +170,11 @@ isoSel.value=200;
 
 /* SHUTTER */
 const shSel = document.getElementById("shutter");
-["1/1000","1/500","1/250","1/125","1/60","1/30","1/15","1/8","1/4","1/2","1"].forEach(v=>{
+[
+"2 min","1 min","30","15","8","4","2","1",
+"1/2","1/4","1/8","1/15","1/30","1/60",
+"1/125","1/250","1/500","1/1000","1/2000","1/4000","1/8000"
+].forEach(v=>{
 const o=document.createElement("option");
 o.value=v;
 o.textContent=v;
@@ -174,34 +207,33 @@ openMenu(e.pageX, e.pageY);
 /* MENU */
 function openMenu(x,y){
 
-const menu = document.createElement("div");
-menu.style.position="absolute";
+menu.innerHTML="";
 menu.style.left=x+"px";
 menu.style.top=y+"px";
-menu.style.background="#1a1a1a";
-menu.style.border="1px solid #333";
-menu.style.zIndex=9999;
+menu.style.display="block";
 
-const fvals=["f/1","f/2","f/2.8","f/4","f/5.6","f/8","f/11"];
+/* F-VALUES IDE KERÜLTEK */
+const fvals=[
+"f/0.7","f/0.8","f/1","f/1.2","f/1.4","f/1.8","f/2","f/2.2","f/2.5","f/2.8",
+"f/3.2","f/3.5","f/4","f/4.5","f/5.6","f/6.3","f/7.1","f/8",
+"f/9","f/10","f/11","f/13","f/14","f/16","f/18","f/20",
+"f/22","f/25","f/29","f/32","f/36","f/40","f/45","f/51",
+"f/57","f/64","f/72","f/81","f/90","f/102","f/114","f/128",
+"f/144","f/160","f/180","f/200","f/225","f/256"
+];
 
 fvals.forEach(f=>{
 const d=document.createElement("div");
+d.className="menu-item";
 d.textContent=f;
-d.style.padding="8px";
-d.style.cursor="pointer";
-
-d.onmouseenter=()=>d.style.background="#2f8cff";
-d.onmouseleave=()=>d.style.background="transparent";
 
 d.onclick=()=>{
 createPoint(f);
-menu.remove();
+menu.style.display="none";
 };
 
 menu.appendChild(d);
 });
-
-document.body.appendChild(menu);
 }
 
 /* CREATE POINT */
@@ -296,9 +328,7 @@ bubble.style.top = p.by + "px";
 
 update();
 }
-</script>
 
-<script>
 /* EXPORT */
 function exportImg(){
 
@@ -313,24 +343,23 @@ ctx.drawImage(img,0,0);
 const sx=c.width/img.offsetWidth;
 const sy=c.height/img.offsetHeight;
 
-/* HEADER (FINOMÍTOTT) */
+/* HEADER */
 ctx.fillStyle="#0b0b0b";
-ctx.fillRect(0,0,c.width,45);
+ctx.fillRect(0,0,c.width,50);
 
 ctx.fillStyle="white";
 ctx.font="12px Arial";
 ctx.textAlign="center";
 ctx.textBaseline="middle";
 
-/* több spacing */
-const project = document.getElementById("project").value || "Untitled";
-const iso = isoSel.value;
-const shutter = shSel.value;
+const project=document.getElementById("project").value||"Untitled";
+const iso=isoSel.value;
+const shutter=shSel.value;
 
-const text =
-`${project}    •    ISO ${iso}    •    ${shutter}`;
-
-ctx.fillText(text, c.width/2, 22);
+ctx.fillText(
+`${project} • ISO ${iso} • ${shutter}`,
+c.width/2,25
+);
 
 /* POINTS */
 points.forEach(p=>{
@@ -345,21 +374,20 @@ ctx.moveTo(ax,ay);
 ctx.lineTo(bx,by);
 ctx.stroke();
 
-/* bubble export */
-const textF = p.f;
+const text=p.f;
 ctx.font="12px Arial";
 
-const pad = 8;
-const w = ctx.measureText(textF).width + pad*2;
-const h = 18;
+const pad=8;
+const w=ctx.measureText(text).width + pad*2;
+const h=18;
 
 ctx.fillStyle="#2f8cff";
-ctx.fillRect(bx, by - h, w, h);
+ctx.fillRect(bx, by-h, w, h);
 
 ctx.fillStyle="white";
 ctx.textAlign="center";
 ctx.textBaseline="middle";
-ctx.fillText(textF, bx + w/2, by - h/2);
+ctx.fillText(text, bx + w/2, by - h/2);
 });
 
 const a=document.createElement("a");
