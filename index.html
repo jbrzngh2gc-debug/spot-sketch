@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spot Sketch PRO FIX</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#111;
+color:white;
+}
+
+/* TOPBAR (VISSZA NORMÁL MÉRETRE) */
+#topbar{
+display:flex;
+gap:10px;
+padding:12px;
+background:#0f0f0f;
+width:100%;
+justify-content:center;
+align-items:center;
+font-size:13px;
+flex-wrap:wrap;
+}
+
+input,select,button{
+background:#151515;
+border:1px solid #2a2a2a;
+color:white;
+padding:6px 10px;
+border-radius:6px;
+font-size:13px;
+}
+
+/* CANVAS */
+#canvas{
+width:100%;
+height:calc(100vh - 70px);
+display:flex;
+justify-content:center;
+align-items:center;
+background:#000;
+overflow:hidden;
+}
+
+/* STAGE */
+#stage{
+position:relative;
+display:inline-block;
+}
+
+#photo{
+display:block;
+}
+
+/* LINE */
+.line{
+position:absolute;
+height:2px;
+background:#2f8cff;
+transform-origin:0 0;
+pointer-events:none;
+}
+
+/* BUBBLE */
+.bubble{
+position:absolute;
+background:#2f8cff;
+color:white;
+padding:6px 10px;
+border-radius:10px;
+font-weight:bold;
+cursor:move;
+user-select:none;
+
+display:flex;
+align-items:center;
+gap:6px;
+line-height:1;
+}
+
+.delete{
+width:16px;
+height:16px;
+border:none;
+border-radius:50%;
+background:rgba(255,255,255,0.25);
+color:white;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:11px;
+line-height:1;
+}
+</style>
+</head>
+
+<body>
+
+<div id="topbar">
+<input id="project" placeholder="Project"/>
+
+<select id="iso"></select>
+<select id="shutter"></select>
+
+<input type="file" id="file">
+<button onclick="exportImg()">Export</button>
+</div>
+
+<div id="canvas">
+  <div id="stage">
+    <img id="photo">
+  </div>
+</div>
+
+<script>
+const stage = document.getElementById("stage");
+const img = document.getElementById("photo");
+
+let points = [];
+let click = {x:0,y:0};
+
+/* ISO */
+const isoSel = document.getElementById("iso");
+[100,200,400,800,1600,3200].forEach(v=>{
+const o=document.createElement("option");
+o.value=v;
+o.textContent="ISO " + v;
+isoSel.appendChild(o);
+});
+isoSel.value=200;
+
+/* SHUTTER */
+const shSel = document.getElementById("shutter");
+["1/1000","1/500","1/250","1/125","1/60","1/30","1/15","1/8","1/4","1/2","1"].forEach(v=>{
+const o=document.createElement("option");
+o.value=v;
+o.textContent=v;
+shSel.appendChild(o);
+});
+shSel.value="1/250";
+
+/* LOAD IMAGE */
+document.getElementById("file").onchange=e=>{
+img.src = URL.createObjectURL(e.target.files[0]);
+};
+
+img.onload=()=>{
+img.style.width = img.naturalWidth + "px";
+img.style.height = img.naturalHeight + "px";
+};
+
+/* CLICK */
+stage.addEventListener("click", e => {
+if(e.target !== img) return;
+
+const rect = stage.getBoundingClientRect();
+
+click.x = e.clientX - rect.left;
+click.y = e.clientY - rect.top;
+
+openMenu(e.pageX, e.pageY);
+});
+
+/* MENU */
+function openMenu(x,y){
+
+const menu = document.createElement("div");
+menu.style.position="absolute";
+menu.style.left=x+"px";
+menu.style.top=y+"px";
+menu.style.background="#1a1a1a";
+menu.style.border="1px solid #333";
+menu.style.zIndex=9999;
+
+const fvals=["f/1","f/2","f/2.8","f/4","f/5.6","f/8","f/11"];
+
+fvals.forEach(f=>{
+const d=document.createElement("div");
+d.textContent=f;
+d.style.padding="8px";
+d.style.cursor="pointer";
+
+d.onmouseenter=()=>d.style.background="#2f8cff";
+d.onmouseleave=()=>d.style.background="transparent";
+
+d.onclick=()=>{
+createPoint(f);
+menu.remove();
+};
+
+menu.appendChild(d);
+});
+
+document.body.appendChild(menu);
+}
+
+/* CREATE POINT */
+function createPoint(f){
+
+const p={
+x:click.x,
+y:click.y,
+bx:click.x+120,
+by:click.y-40,
+f
+};
+
+const line=document.createElement("div");
+line.className="line";
+
+const bubble=document.createElement("div");
+bubble.className="bubble";
+bubble.innerHTML=`<span>${f}</span><button class="delete">×</button>`;
+
+stage.appendChild(line);
+stage.appendChild(bubble);
+
+/* CENTER */
+function getBubbleCenter(){
+const r=bubble.getBoundingClientRect();
+const s=stage.getBoundingClientRect();
+
+return {
+x:(r.left + r.width/2) - s.left,
+y:(r.top + r.height/2) - s.top
+};
+}
+
+/* UPDATE LINE */
+function update(){
+
+const ax = p.x;
+const ay = p.y;
+
+const bc = getBubbleCenter();
+
+const dx = bc.x - ax;
+const dy = bc.y - ay;
+
+const len = Math.sqrt(dx*dx + dy*dy);
+const ang = Math.atan2(dy,dx)*180/Math.PI;
+
+line.style.left = ax + "px";
+line.style.top = ay + "px";
+line.style.width = len + "px";
+line.style.transform = `rotate(${ang}deg)`;
+}
+
+/* DRAG */
+let drag=false,ox,oy;
+
+bubble.onmousedown=e=>{
+drag=true;
+ox=e.offsetX;
+oy=e.offsetY;
+};
+
+document.onmousemove=e=>{
+if(!drag) return;
+
+const rect = stage.getBoundingClientRect();
+
+p.bx = e.clientX - rect.left - ox;
+p.by = e.clientY - rect.top - oy;
+
+bubble.style.left = p.bx + "px";
+bubble.style.top = p.by + "px";
+
+update();
+};
+
+document.onmouseup=()=>drag=false;
+
+/* DELETE */
+bubble.querySelector(".delete").onclick=e=>{
+e.stopPropagation();
+bubble.remove();
+line.remove();
+points = points.filter(x=>x!==p);
+};
+
+points.push(p);
+
+bubble.style.left = p.bx + "px";
+bubble.style.top = p.by + "px";
+
+update();
+}
+</script>
+
+<script>
+/* EXPORT */
+function exportImg(){
+
+const c=document.createElement("canvas");
+const ctx=c.getContext("2d");
+
+c.width=img.naturalWidth;
+c.height=img.naturalHeight;
+
+ctx.drawImage(img,0,0);
+
+const sx=c.width/img.offsetWidth;
+const sy=c.height/img.offsetHeight;
+
+/* HEADER (FINOMÍTOTT) */
+ctx.fillStyle="#0b0b0b";
+ctx.fillRect(0,0,c.width,45);
+
+ctx.fillStyle="white";
+ctx.font="12px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+
+/* több spacing */
+const project = document.getElementById("project").value || "Untitled";
+const iso = isoSel.value;
+const shutter = shSel.value;
+
+const text =
+`${project}    •    ISO ${iso}    •    ${shutter}`;
+
+ctx.fillText(text, c.width/2, 22);
+
+/* POINTS */
+points.forEach(p=>{
+const ax=p.x*sx;
+const ay=p.y*sy;
+const bx=p.bx*sx;
+const by=p.by*sy;
+
+ctx.strokeStyle="#2f8cff";
+ctx.beginPath();
+ctx.moveTo(ax,ay);
+ctx.lineTo(bx,by);
+ctx.stroke();
+
+/* bubble export */
+const textF = p.f;
+ctx.font="12px Arial";
+
+const pad = 8;
+const w = ctx.measureText(textF).width + pad*2;
+const h = 18;
+
+ctx.fillStyle="#2f8cff";
+ctx.fillRect(bx, by - h, w, h);
+
+ctx.fillStyle="white";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+ctx.fillText(textF, bx + w/2, by - h/2);
+});
+
+const a=document.createElement("a");
+a.href=c.toDataURL("image/png");
+a.download="spot-sketch.png";
+a.click();
+}
+</script>
+
+</body>
+</html>
