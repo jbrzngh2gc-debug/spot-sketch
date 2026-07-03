@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spot Sketch PRO</title>
+
+<style>
+html, body{
+margin:0;
+padding:0;
+height:100%;
+overflow:hidden;
+font-family:Arial;
+background:#111;
+color:white;
+}
+
+/* TOPBAR */
+#topbar{
+display:flex;
+gap:10px;
+padding:6px 10px;
+background:#0f0f0f;
+width:100%;
+justify-content:center;
+align-items:center;
+font-size:12px;
+flex-wrap:wrap;
+}
+
+input,select,button{
+background:#151515;
+border:1px solid #2a2a2a;
+color:white;
+padding:5px 8px;
+border-radius:6px;
+font-size:12px;
+}
+
+/* CANVAS */
+#canvas{
+width:100vw;
+height:calc(100vh - 52px);
+display:flex;
+justify-content:center;
+align-items:center;
+background:#000;
+overflow:hidden;
+}
+
+/* STAGE */
+#stage{
+position:relative;
+display:inline-block;
+}
+
+/* IMAGE */
+#photo{
+display:block;
+max-width:100vw;
+max-height:calc(100vh - 52px);
+width:auto;
+height:auto;
+object-fit:contain;
+}
+
+/* LINE */
+.line{
+position:absolute;
+height:2px;
+background:#2f8cff;
+transform-origin:0 0;
+pointer-events:none;
+}
+
+/* BUBBLE */
+.bubble{
+position:absolute;
+background:#2f8cff;
+color:white;
+padding:5px 8px;
+border-radius:10px;
+font-weight:bold;
+cursor:move;
+user-select:none;
+display:flex;
+align-items:center;
+gap:6px;
+line-height:1;
+max-width:120px;
+}
+
+/* DELETE */
+.delete{
+width:16px;
+height:16px;
+border:none;
+border-radius:50%;
+background:rgba(255,255,255,0.25);
+color:white;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:11px;
+}
+
+/* MENU */
+#menu{
+position:absolute;
+display:none;
+background:#1a1a1a;
+border:1px solid #333;
+z-index:9999;
+max-height:300px;
+overflow:auto;
+min-width:120px;
+}
+
+.menu-item{
+padding:8px;
+cursor:pointer;
+font-size:12px;
+}
+
+.menu-item:hover{
+background:#2f8cff;
+}
+</style>
+</head>
+
+<body>
+
+<div id="topbar">
+<input id="project" placeholder="Project"/>
+
+<select id="iso"></select>
+<select id="shutter"></select>
+
+<input type="file" id="file">
+<button onclick="exportImg()">Export</button>
+</div>
+
+<div id="canvas">
+  <div id="stage">
+    <img id="photo">
+  </div>
+</div>
+
+<div id="menu"></div>
+
+<script>
+const stage = document.getElementById("stage");
+const img = document.getElementById("photo");
+const menu = document.getElementById("menu");
+
+let points = [];
+let click = {x:0,y:0};
+
+/* ISO */
+const isoSel = document.getElementById("iso");
+[12,25,50,100,200,400,800,1600,3200,6400,12800].forEach(v=>{
+const o=document.createElement("option");
+o.value=v;
+o.textContent="ISO " + v;
+isoSel.appendChild(o);
+});
+isoSel.value=200;
+
+/* SHUTTER */
+const shSel = document.getElementById("shutter");
+[
+"2 min","1 min","30","15","8","4","2","1",
+"1/2","1/4","1/8","1/15","1/30","1/60",
+"1/125","1/250","1/500","1/1000","1/2000","1/4000","1/8000"
+].forEach(v=>{
+const o=document.createElement("option");
+o.value=v;
+o.textContent=v;
+shSel.appendChild(o);
+});
+shSel.value="1/250";
+
+/* LOAD IMAGE */
+document.getElementById("file").onchange=e=>{
+img.src = URL.createObjectURL(e.target.files[0]);
+};
+
+img.onload=()=>{
+img.style.width = img.naturalWidth + "px";
+img.style.height = img.naturalHeight + "px";
+};
+
+/* CLICK */
+stage.addEventListener("click", e => {
+if(e.target !== img) return;
+
+const rect = stage.getBoundingClientRect();
+
+click.x = e.clientX - rect.left;
+click.y = e.clientY - rect.top;
+
+openMenu(e.pageX, e.pageY);
+});
+
+/* MENU */
+function openMenu(x,y){
+
+menu.innerHTML="";
+menu.style.left=x+"px";
+menu.style.top=y+"px";
+menu.style.display="block";
+
+/* F-VALUES IDE KERÜLTEK */
+const fvals=[
+"f/0.7","f/0.8","f/1","f/1.2","f/1.4","f/1.8","f/2","f/2.2","f/2.5","f/2.8",
+"f/3.2","f/3.5","f/4","f/4.5","f/5.6","f/6.3","f/7.1","f/8",
+"f/9","f/10","f/11","f/13","f/14","f/16","f/18","f/20",
+"f/22","f/25","f/29","f/32","f/36","f/40","f/45","f/51",
+"f/57","f/64","f/72","f/81","f/90","f/102","f/114","f/128",
+"f/144","f/160","f/180","f/200","f/225","f/256"
+];
+
+fvals.forEach(f=>{
+const d=document.createElement("div");
+d.className="menu-item";
+d.textContent=f;
+
+d.onclick=()=>{
+createPoint(f);
+menu.style.display="none";
+};
+
+menu.appendChild(d);
+});
+}
+
+/* CREATE POINT */
+function createPoint(f){
+
+const p={
+x:click.x,
+y:click.y,
+bx:click.x+120,
+by:click.y-40,
+f
+};
+
+const line=document.createElement("div");
+line.className="line";
+
+const bubble=document.createElement("div");
+bubble.className="bubble";
+bubble.innerHTML=`<span>${f}</span><button class="delete">×</button>`;
+
+stage.appendChild(line);
+stage.appendChild(bubble);
+
+/* CENTER */
+function getBubbleCenter(){
+const r=bubble.getBoundingClientRect();
+const s=stage.getBoundingClientRect();
+
+return {
+x:(r.left + r.width/2) - s.left,
+y:(r.top + r.height/2) - s.top
+};
+}
+
+/* UPDATE LINE */
+function update(){
+
+const ax = p.x;
+const ay = p.y;
+
+const bc = getBubbleCenter();
+
+const dx = bc.x - ax;
+const dy = bc.y - ay;
+
+const len = Math.sqrt(dx*dx + dy*dy);
+const ang = Math.atan2(dy,dx)*180/Math.PI;
+
+line.style.left = ax + "px";
+line.style.top = ay + "px";
+line.style.width = len + "px";
+line.style.transform = `rotate(${ang}deg)`;
+}
+
+/* DRAG */
+let drag=false,ox,oy;
+
+bubble.onmousedown=e=>{
+drag=true;
+ox=e.offsetX;
+oy=e.offsetY;
+};
+
+document.onmousemove=e=>{
+if(!drag) return;
+
+const rect = stage.getBoundingClientRect();
+
+p.bx = e.clientX - rect.left - ox;
+p.by = e.clientY - rect.top - oy;
+
+bubble.style.left = p.bx + "px";
+bubble.style.top = p.by + "px";
+
+update();
+};
+
+document.onmouseup=()=>drag=false;
+
+/* DELETE */
+bubble.querySelector(".delete").onclick=e=>{
+e.stopPropagation();
+bubble.remove();
+line.remove();
+points = points.filter(x=>x!==p);
+};
+
+points.push(p);
+
+bubble.style.left = p.bx + "px";
+bubble.style.top = p.by + "px";
+
+update();
+}
+
+/* EXPORT */
+function exportImg(){
+
+const c=document.createElement("canvas");
+const ctx=c.getContext("2d");
+
+c.width=img.naturalWidth;
+c.height=img.naturalHeight;
+
+ctx.drawImage(img,0,0);
+
+const sx=c.width/img.offsetWidth;
+const sy=c.height/img.offsetHeight;
+
+/* HEADER */
+ctx.fillStyle="#0b0b0b";
+ctx.fillRect(0,0,c.width,50);
+
+ctx.fillStyle="white";
+ctx.font="12px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+
+const project=document.getElementById("project").value||"Untitled";
+const iso=isoSel.value;
+const shutter=shSel.value;
+
+ctx.fillText(
+`${project} • ISO ${iso} • ${shutter}`,
+c.width/2,25
+);
+
+/* POINTS */
+points.forEach(p=>{
+const ax=p.x*sx;
+const ay=p.y*sy;
+const bx=p.bx*sx;
+const by=p.by*sy;
+
+ctx.strokeStyle="#2f8cff";
+ctx.beginPath();
+ctx.moveTo(ax,ay);
+ctx.lineTo(bx,by);
+ctx.stroke();
+
+const text=p.f;
+ctx.font="12px Arial";
+
+const pad=8;
+const w=ctx.measureText(text).width + pad*2;
+const h=18;
+
+ctx.fillStyle="#2f8cff";
+ctx.fillRect(bx, by-h, w, h);
+
+ctx.fillStyle="white";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+ctx.fillText(text, bx + w/2, by - h/2);
+});
+
+const a=document.createElement("a");
+a.href=c.toDataURL("image/png");
+a.download="spot-sketch.png";
+a.click();
+}
+</script>
+
+</body>
+</html>
