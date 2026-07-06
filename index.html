@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spot Sketch</title>
+
+<style>
+*{
+box-sizing:border-box;
+}
+
+html, body{
+width:100%;
+overflow-x:hidden;
+}
+
+html, body{
+margin:0;
+padding:0;
+height:100%;
+overflow:hidden;
+font-family:Arial;
+background:#0f0f0f;
+color:white;
+}
+body{
+overflow:hidden;
+height:100dvh;
+}
+
+#topbar{
+display:flex;
+gap:8px;
+padding:6px 10px;
+background:#0f0f0f;
+width:100%;
+max-width:100vw;
+
+justify-content:center;
+align-items:center;
+font-size:12px;
+flex-wrap:wrap;
+height:52px;
+box-sizing:border-box;
+}
+
+
+.fileBtn{
+    display:inline-block;
+    Background:white;
+    border:2px solid #2a2a2a;
+    color:#151515;
+    padding:5px 8px;
+    border-radius:14px;
+    font-size:12px;
+    cursor:pointer;
+}
+
+.fileBtn:hover{
+    background:#e6e6e6;
+}
+
+input,select,button{
+background:#151515;
+border:2px solid #2a2a2a;
+color:white;
+padding:5px 8px;
+border-radius:14px;
+font-size:12px;
+}
+#contrast{
+    color:white;
+    font-size:12px;
+    font-weight:bold;
+    min-width:70px;
+    text-align:center;
+}
+
+#footer{
+height:52px;
+background:#0f0f0f;
+width:100%;
+}
+
+#canvas{
+position:relative;
+width:100vw;
+height:calc(100dvh - 104px); /* header + footer */
+Background:#0f0f0f;
+}
+
+#photo{
+display:none;
+position:absolute;
+Top:0px;
+left:50%;
+transform:translateX(-50%);
+max-width:100%;
+max-height:100%;
+width:auto;
+height:auto;
+}
+
+
+
+
+@media (max-width:768px){
+
+#topbar{
+height:auto;
+min-height:52px;
+padding:10px;
+}
+select {
+  padding-right: 28px;
+}
+
+#canvas{
+margin-top:12px;
+height:calc(100dvh - 116px);
+max-width:95%;
+max-height:100%;
+transform:translateX(-50%);
+left:50%;
+}
+
+#footer{
+height:52px;
+}
+
+}
+@media (max-width:768px){
+  #modalBox .modal-item{
+    color: #000 !important;
+  }
+}
+
+
+.bubble{
+  position:absolute;
+  background:#2f8cff;
+  color:white;
+  padding:5px 10px 5px 10px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:bold;
+  white-space:nowrap;
+  user-select:none;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+}
+
+
+
+
+
+.marker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #2f8cff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: transparent;
+}
+
+
+
+
+
+
+.zoneLabel{
+  position:absolute;
+  top:-16px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:10px;
+  font-weight:600;
+  opacity:0.85;
+  white-space:nowrap;
+}
+
+.bubble .del{
+margin-left:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+#modal{
+position:fixed;
+inset:0;
+display:none;
+align-items:center;
+justify-content:center;
+background:rgba(0,0,0,0.4);
+z-index:99999;
+}
+
+#modalBox{
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0,0,0,0.);
+    backdrop-filter: blur(5px);
+    color: #111;
+    width: 80%;
+    max-height: 60%;
+    overflow-y: auto;
+    border-radius: 20px;
+    padding: 0px;
+
+}
+
+.row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  justify-content:center;
+}
+
+
+.fval{
+  line-height:1;
+  display:flex;
+  align-items:center;
+}
+
+.modal-item{
+padding:12px;
+font-size:14px;
+border-bottom:1px solid rgba(255,255,255,0.08);
+cursor:pointer;
+    text-align: center;
+ color: #000 !important;
+}
+
+.modal-item:active{
+background:rgba(200, 195, 185, 0.4);
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  color: white;
+  background-color: #151515;
+
+  padding-right: 34px;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 18px;
+}
+
+
+#menu{
+position:absolute;
+display:none;
+
+z-index:9999;
+min-width:160px;
+max-height:350px;
+overflow-y:auto;
+overflow-x:hidden;
+backdrop-filter: blur(18px);
+background: rgba(20, 20, 20, 0.55);
+backdrop-filter: blur(18px);
+-webkit-backdrop-filter: blur(18px);
+
+border: 0px solid rgba(20, 20, 20, 0.55);
+box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+
+border-radius: 14px;
+}
+
+.menu-item{
+padding:8px;
+cursor:pointer;
+font-size:12px;
+color:#111;
+}
+.menu-item:hover{
+background: rgba(0,0,0,0.06);
+}
+
+.export-btn{
+background:#2f8cff;
+border:1px solid #2f8cff;
+color:white;
+font-weight:600;
+}
+
+.export-btn:hover{
+background:#1f6fe0;
+border-color:#1f6fe0;
+}
+
+.plus{
+    position:relative;
+    width:180px;
+    height:180px;
+}
+
+.plus::before,
+.plus::after{
+    content:"";
+    position:absolute;
+    background:#777;
+    border-radius:2px;
+}
+
+.plus::before{
+    width:4px;
+    height:180px;
+    left:50%;
+    top:0;
+    transform:translateX(-50%);
+}
+
+.plus::after{
+    width:180px;
+    height:4px;
+    left:0;
+    top:50%;
+    transform:translateY(-50%);
+}
+#emptyState{
+    position:absolute;
+
+    width: 490px;
+    height: 690px;
+
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    cursor:pointer;
+    color:#777;
+
+    background: rgba(255,255,255,0.04);
+   
+    border-radius: 24px;
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#emptyState .plus{
+    font-size:350px;
+    line-height:1;
+    font-weight:50;
+ font-family:Arial, sans-serif;
+}
+
+#emptyState .text{
+    margin-top:50px;
+    font-size:18px;
+}
+
+#footer{
+    height:52px;
+    background:#0f0f0f;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<div id="topbar">
+<label for="file" class="fileBtn">
+    Open Image
+</label>
+<input id="project" placeholder="Project"/>
+
+<select id="iso"></select>
+<select id="shutter"></select>
+<select id="ev" style="display:none;"></select>
+
+<span id="contrast">LAT --</span>
+
+<input type="file" id="file" hidden>
+
+
+<button class="export-btn" onclick="exportImg()">EXPORT</button>
+</div>
+
+
+<div id="canvas">
+
+    <div id="emptyState">
+<div class="plus"></div>
+      
+        <div class="text">Open Image</div>
+    </div>
+
+    <img id="photo">
+
+</div>
+
+
+<div id="footer">
+</div>
+
+
+<div id="menu"></div>
+<div id="modal">
+  <div id="modalBox"></div>
+</div>
+
+
+<script>
+const img = document.getElementById("photo");
+const canvas = document.getElementById("canvas");
+const menu = document.getElementById("menu");
+
+let points = [];
+let baseISO = 100;
+let baseShutter = "1/125";
+let click = {x:0,y:0};
+let layoutLock = false;
+
+const extremeF = new Set([0.6, 257]);
+const emptyState = document.getElementById("emptyState");
+const fileInput = document.getElementById("file");
+
+emptyState.onclick = () => fileInput.click();
+
+fileInput.onchange = e => {
+    img.src = URL.createObjectURL(e.target.files[0]);
+    img.style.display = "block";
+    emptyState.style.display = "none";
+};
+
+
+const fStops = [
+0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.4, 1.6, 1.8,
+2, 2.2, 2.5, 2.8, 3.2, 3.5, 4, 4.5, 5, 5.6,
+6.3, 7.1, 8, 9, 10, 11, 13, 14, 16, 18, 20,
+22, 25, 29, 32, 36, 40, 45, 51, 57, 64,
+72, 80, 90, 102, 114, 128, 144, 162, 180, 204, 228, 256, 257
+];
+
+
+let exposureComp = 0;
+
+
+const zones = [
+"ZONE 0","ZONE I","ZONE II","ZONE III","ZONE IV",
+"ZONE V","ZONE VI","ZONE VII","ZONE VIII","ZONE IX","ZONE X"
+];
+
+
+/* EV */
+const evSel = document.getElementById("ev");
+
+const zoneNames = [
+  "ZONE 0",
+  "ZONE I",
+  "ZONE II",
+  "ZONE III",
+  "ZONE IV",
+  "ZONE V",
+  "ZONE VI",
+  "ZONE VII",
+  "ZONE VIII",
+  "ZONE IX",
+  "ZONE X"
+];
+
+zoneNames.forEach((name, index) => {
+
+    const o = document.createElement("option");
+
+    // EV eltolás a Zone V-hoz képest
+    o.value = index - 5;
+
+    o.textContent = name;
+
+    evSel.appendChild(o);
+});
+
+
+// alapértelmezés: Zone V
+evSel.value = 0;
+
+
+/* ISO */
+const isoSel = document.getElementById("iso");
+[12,25,50,100,200,400,800,1600,3200,6400,12800].forEach(v=>{
+const o=document.createElement("option");
+o.value=v;
+o.textContent="ISO " + v;
+isoSel.appendChild(o);
+});
+isoSel.value=100;
+
+/* SHUTTER */
+
+const fullStops = new Set([
+"1","2","4","8","15","30","60",
+"0.5","1/4","1/8","1/15","1/30","1/60","1/125",
+"1/250","1/500","1/1000","1/2000","1/4000","1/8000"
+]);
+
+const shSel = document.getElementById("shutter");
+
+[
+"30","25","20","15","13","10","8","6","5","4","3.2","2.5","2","1.6","1.3","1",
+"0.8","0.6","0.5","0.4",
+"1/3","1/4","1/5","1/6","1/8","1/10","1/13","1/15","1/20","1/25","1/30",
+"1/40","1/50","1/60","1/80","1/100","1/125","1/160","1/200","1/250",
+"1/320","1/400","1/500","1/640","1/800","1/1000","1/1250","1/1600",
+"1/2000","1/2500","1/3200","1/4000","1/5000","1/6400","1/8000"
+].forEach(v => {
+
+  const o = document.createElement("option");
+  o.value = v;
+
+  o.textContent = fullStops.has(v) ? ` ●    ${v}` : v;
+
+  shSel.appendChild(o);
+});
+
+shSel.value = "1/125";
+
+
+
+/* IMAGE LOAD */
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+
+  const tempImg = new Image();
+  tempImg.onload = () => {
+    const maxSide = 2040;
+
+    let w = tempImg.width;
+    let h = tempImg.height;
+
+    const scale = maxSide / Math.max(w, h);
+
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(tempImg, 0, 0, w, h);
+
+    canvas.toBlob((blob) => {
+      const newUrl = URL.createObjectURL(blob);
+
+      img.src = newUrl;
+      img.style.display = "block";
+      emptyState.style.display = "none";
+
+      render();
+
+      URL.revokeObjectURL(url);
+    }, "image/jpeg", 0.95);
+  };
+
+  tempImg.src = url;
+});
+
+img.onload = render;
+img.onerror = () => {
+img.style.display = "none";
+};
+
+
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+
+  const tempImg = new Image();
+  tempImg.onload = () => {
+    const maxSide = 2040;
+
+    let w = tempImg.width;
+    let h = tempImg.height;
+
+    const scale = maxSide / Math.max(w, h);
+
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(tempImg, 0, 0, w, h);
+
+    canvas.toBlob((blob) => {
+      const newUrl = URL.createObjectURL(blob);
+
+      img.src = newUrl;
+      img.style.display = "block";
+      emptyState.style.display = "none";
+
+      render();
+
+      URL.revokeObjectURL(url);
+    }, "image/jpeg", 0.95);
+  };
+
+  tempImg.src = url;
+});
+
+/* CLICK */
+canvas.addEventListener("dblclick", e => {
+
+    if (e.target !== img) return;
+
+    const rect = img.getBoundingClientRect();
+
+    click.x = (e.clientX - rect.left) / rect.width;
+    click.y = (e.clientY - rect.top) / rect.height;
+
+    openMenu(e.pageX, e.pageY);
+});
+
+let pressTimer;
+
+canvas.addEventListener("touchstart", (e) => {
+    pressTimer = setTimeout(() => {
+        const t = e.touches[0];
+        const rect = img.getBoundingClientRect();
+
+        click.x = (t.clientX - rect.left) / rect.width;
+        click.y = (t.clientY - rect.top) / rect.height;
+
+        openMenu(t.pageX, t.pageY);
+    }, 500);
+});
+
+canvas.addEventListener("touchend", () => {
+    clearTimeout(pressTimer);
+});
+
+/* MENU */
+
+function openMenu(x, y) {
+
+const items = [
+"ƒ / 0.7","ƒ / 0.8","ƒ / 0.9","ƒ / 1","ƒ / 1.1","ƒ / 1.2","ƒ / 1.4","ƒ / 1.6","ƒ / 1.8",
+"ƒ / 2","ƒ / 2.2","ƒ / 2.5","ƒ / 2.8","ƒ / 3.2","ƒ / 3.5","ƒ / 4","ƒ / 4.5","ƒ / 5.0","ƒ / 5.6",
+"ƒ / 6.3","ƒ / 7.1","ƒ / 8","ƒ / 9","ƒ / 10","ƒ / 11","ƒ / 13","ƒ / 14","ƒ / 16","ƒ / 18","ƒ / 20",
+"ƒ / 22","ƒ / 25","ƒ / 29","ƒ / 32","ƒ / 36","ƒ / 40","ƒ / 45","ƒ / 51","ƒ / 57","ƒ / 64","ƒ / 72",
+"ƒ / 80","ƒ / 90","ƒ / 102","ƒ / 114","ƒ / 128","ƒ / 144","ƒ / 161","ƒ / 180","ƒ / 204","ƒ / 228","ƒ / 256"
+];
+
+const fullStops = new Set([
+"ƒ / 0.7","ƒ / 1","ƒ / 1.4","ƒ / 2","ƒ / 2.8","ƒ / 4","ƒ / 5.6",
+"ƒ / 8","ƒ / 11","ƒ / 16","ƒ / 22","ƒ / 32","ƒ / 45","ƒ / 64","ƒ / 90","ƒ / 128","ƒ / 180","ƒ / 256"
+]);
+
+const isMobile = window.innerWidth < 768;
+
+const modal = document.getElementById("modal");
+const box = document.getElementById("modalBox");
+
+box.innerHTML = "";
+
+/* =========================
+   MOBILE (full screen)
+========================= */
+if (isMobile) {
+
+items.forEach(f => {
+
+  const isFull = fullStops.has(f);
+
+  const div = document.createElement("div");
+  div.className = "modal-item";
+
+  div.textContent = (isFull ? "● " : "   ") + f;
+
+  if (isFull) {
+    div.style.fontWeight = "700";
+    div.style.background = "rgba(200, 195, 185, 0.4)";
+  }
+
+  div.onclick = () => {
+    createPoint(f);
+    modal.style.display = "none";
+  };
+
+  box.appendChild(div);
+});
+
+modal.style.display = "flex";
+
+modal.onclick = (e) => {
+  if (e.target === modal) modal.style.display = "none";
+};
+
+return;
+}
+
+
+
+/* =========================
+   DESKTOP FLOATING MENU (GLASS STYLE)
+========================= */
+
+menu.innerHTML = "";
+
+// pozíció + alap stílus
+menu.style.display = "block";
+menu.style.position = "absolute";
+menu.style.left = x + "px";
+menu.style.top = y + "px";
+
+// 🍎 glass look
+menu.style.minWidth = "180px";
+menu.style.maxHeight = "320px";
+menu.style.padding = "10px 8px";
+menu.style.borderRadius = "14px";
+menu.style.zIndex = 99999;
+
+menu.style.background = "rgba(20, 20, 20, 0.55)";
+menu.style.backdropFilter = "blur(18px)";
+menu.style.webkitBackdropFilter = "blur(18px)";
+menu.style.border = "1px solid rgba(255,255,255,0.08)";
+menu.style.boxShadow = "0 10px 30px rgba(0,0,0,0.4)";
+
+// scroll finomítása (nem “külön sáv” érzés)
+menu.style.overflowY = "auto";
+menu.style.scrollbarWidth = "thin"; // Firefox
+menu.style.scrollbarColor = "rgba(255,255,255,0.15) transparent";
+
+// Chrome scrollbar (dinamikusan)
+menu.style.setProperty("--sb", "rgba(255,255,255,0.2)");
+
+menu.innerHTML = "";
+
+/* custom scrollbar CSS injection (egyszer kell csak, de itt biztos) */
+if (!document.getElementById("menuScrollStyle")) {
+  const style = document.createElement("style");
+  style.id = "menuScrollStyle";
+  style.textContent = `
+    #menu::-webkit-scrollbar {
+      width: 6px;
+    }
+    #menu::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #menu::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.18);
+      border-radius: 10px;
+    }
+    #menu::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.35);
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+items.forEach(f => {
+
+  const isFull = fullStops.has(f);
+
+  const d = document.createElement("div");
+
+  d.textContent = (isFull ? "● " : "") + f;
+
+  d.style.padding = "10px 12px";
+  d.style.fontSize = "14px";
+  d.style.borderRadius = "10px";
+  d.style.cursor = "pointer";
+  d.style.transition = "all 0.15s ease";
+ d.style.background = isFull ? "rgba(47,140,255,0.18)" : "transparent";
+  d.style.color = isFull ? "#ffffff" : "rgba(255,255,255,0.85)";
+  d.style.fontWeight = isFull ? "700" : "400";
+
+  d.onmouseenter = () => {
+  
+    d.style.transform = "scale(1.02)";
+  };
+
+  d.onmouseleave = () => {
+    
+    d.style.transform = "scale(1)";
+  };
+
+  d.onclick = () => {
+    createPoint(f);
+    menu.style.display = "none";
+  };
+
+  menu.appendChild(d);
+});
+requestAnimationFrame(() => {
+  menu.style.transform = "scale(1)";
+  menu.style.opacity = "1";
+});
+
+document.addEventListener("mousedown", function closeMenu(e) {
+  if (!menu.contains(e.target)) {
+    menu.style.display = "none";
+    document.removeEventListener("mousedown", closeMenu);
+  }
+});
+
+}
+
+function getBubbleOffset() {
+  const r = img.getBoundingClientRect();
+
+  const isTopHalf = point.y < 0.5;
+  const isLeftHalf = point.x < 0.5;
+
+  let x = 0;
+  let y = 0;
+
+  // default: fölé
+  y = -40;
+
+  // ha fent túl közel a széléhez → alá
+  if (point.y < 0.1) y = 40;
+
+  // bal/jobb eltolás
+  if (isLeftHalf) x = 40;
+  else x = -40;
+
+  return { x, y };
+}
+
+function update(){
+  const r = img.getBoundingClientRect();
+  const off = getBubbleOffset();
+
+  bubble.style.left = (point.x * r.width + r.left + off.x) + "px";
+  bubble.style.top  = (point.y * r.height + r.top + off.y) + "px";
+
+  marker.style.left = (point.x * r.width + r.left) + "px";
+  marker.style.top  = (point.y * r.height + r.top) + "px";
+}
+
+
+/* 🔥 CREATE (FIXED DELETE + DRAG) */
+function createPoint(f){
+
+const marker = document.createElement("div");
+marker.className = "marker";
+document.body.appendChild(marker);
+
+const bubble = document.createElement("div");
+bubble.className = "bubble";
+bubble.innerHTML = `
+  <div class="zoneLabel"></div>
+  <div class="row">
+    <div class="fval"></div>
+    <span class="del">×</span>
+  </div>
+`;
+
+document.body.appendChild(bubble);
+
+bubble.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    if (moved) return; // 🔥 ha húztad, ne nyisson menüt
+
+    const rect = bubble.getBoundingClientRect();
+    openZoneMenu(point, rect.left, rect.bottom + 5);
+});
+const rect = img.getBoundingClientRect();
+let moved = false;
+let point = {
+    x: click.x,
+    y: click.y,
+    f: f,
+
+    baseF: f,
+zone: "ZONE V",
+    zoneEV: 0,   // ZONE V = 0 EV
+
+    iso: Number(isoSel.value),
+    shutter: shSel.value,
+
+    el: bubble
+};
+
+points.push(point);
+updateUI();
+
+
+/* position update */
+function update(){
+  positionElements(point, bubble, marker);
+}
+update();
+
+/* DELETE */
+bubble.querySelector(".del").onclick = (e)=>{
+  e.stopPropagation();
+  bubble.remove();
+  points = points.filter(p => p !== point);
+marker.remove();
+  updateUI();
+};
+
+/* DRAG */
+let dragging = false;
+let offsetX = 0;
+let offsetY = 0;
+
+bubble.addEventListener("mousedown", (e)=>{
+dragging = true;
+moved = false; // 🔥 reset
+const imgRect = img.getBoundingClientRect();
+
+/* buborék középpontja image koordinátában */
+const bubbleCenterX = point.x * imgRect.width + imgRect.left;
+const bubbleCenterY = point.y * imgRect.height + imgRect.top;
+
+/* egységes anchor: KÖZÉP */
+offsetX = e.clientX - bubbleCenterX;
+offsetY = e.clientY - bubbleCenterY;
+
+
+e.preventDefault();
+});
+
+document.addEventListener("mousemove", (e)=>{
+if(!dragging) return;
+
+const r = img.getBoundingClientRect();
+
+let nx = e.clientX - r.left - offsetX;
+let ny = e.clientY - r.top - offsetY;
+
+// 🔥 ha legalább 3px-t mozdult, akkor drag
+if (Math.abs(nx - point.x * r.width) > 3 || Math.abs(ny - point.y * r.height) > 3) {
+    moved = true;
+}
+
+point.x = nx / r.width;
+point.y = ny / r.height;
+
+positionElements(point, bubble, marker);
+
+update();
+});
+
+document.addEventListener("mouseup", ()=>{
+dragging = false;
+});
+
+}
+
+function snapF(value){
+let closest = fStops[0];
+let minDiff = Infinity;
+
+for(const f of fStops){
+const diff = Math.abs(f - value);
+if(diff < minDiff){
+minDiff = diff;
+closest = f;
+}
+}
+
+return closest;
+}
+
+function formatF(value){
+    return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+}
+
+function positionElements(point, bubble, marker){
+
+  const r = img.getBoundingClientRect();
+
+  const x = point.x * r.width + r.left;
+  const y = point.y * r.height + r.top;
+
+  // marker fix
+  marker.style.left = x + "px";
+  marker.style.top = y + "px";
+
+  // bubble size
+  const bw = bubble.offsetWidth;
+  const bh = bubble.offsetHeight;
+
+  let bx = x;
+  let by = y;
+
+  const padding = 12;
+
+  // default: felül
+  by = y - bh - 14;
+
+  // ha túl fent → alul
+  if (y < bh + 40) {
+    by = y + 14;
+  }
+
+  // bal széle
+  if (x < bw / 2 + 10) {
+    bx = x + padding;
+  }
+  // jobb széle
+  else if (x > window.innerWidth - bw / 2 - 10) {
+    bx = x - bw - padding;
+  }
+  // közép
+  else {
+    bx = x - bw / 2;
+  }
+
+  bubble.style.left = bx + "px";
+  bubble.style.top = by + "px";
+}
+
+
+function getContrastEV(){
+
+  if(points.length === 0) return null;
+
+  let minIndex = Infinity;
+  let maxIndex = -Infinity;
+
+  for(const p of points){
+
+    const fnum = recalcF(p);   // aktuális f
+    const snapped = snapF(fnum); // kötelező, mert listához viszonyítunk
+
+    const idx = fStops.indexOf(snapped);
+
+    if(idx === -1) continue;
+
+    if(idx < minIndex) minIndex = idx;
+    if(idx > maxIndex) maxIndex = idx;
+  }
+
+  const steps = maxIndex - minIndex;
+
+  return steps / 3; // vagy steps.toFixed(0)
+}
+
+
+
+function updateUI(){
+
+  render();
+
+  const evRange = getContrastEV();
+
+  
+
+}
+
+function getLatColor(lat){
+  if(lat == null || !isFinite(lat)) return "#ffffff";
+
+  if(lat <= 8) return "#2ecc71";   // zöld
+  if(lat <= 12) return "#ffffff";  // fehér
+  return "#ff3b3b";                // piros
+}
+
+
+function formatZone(z){
+  if(!z || z.includes("reset")) return "";
+
+  const map = {
+    "ZONE 0":"ZONE 0",
+    "ZONE I":"ZONE I",
+    "ZONE II":"ZONE II",
+    "ZONE III":"ZONE III",
+    "ZONE IV":"ZONE IV",
+    "ZONE V":"ZONE V",
+    "ZONE VI":"ZONE VI",
+    "ZONE VII":"ZONE VII",
+    "ZONE VIII":"ZONE VIII",
+    "ZONE IX":"ZONE IX",
+    "ZONE X":"ZONE X"
+  };
+
+  return map[z] || z;
+}
+
+function zoneOffset(p){
+  if(!p.zone || p.zone.includes("reset")) return "";
+
+  const idx = zones.findIndex(z => z === p.zone);
+  const vIdx = zones.findIndex(z => z.includes("ZONE V"));
+
+  const diff = idx - vIdx;
+
+  if(diff === 0) return "0EV";
+  return (diff > 0 ? `+${diff}EV` : `${diff}EV`);
+}
+
+/* RENDER */
+
+
+function zoneColor(off){
+  const n = parseFloat(off);
+
+  if (isNaN(n) || n === 0) return "#ffffff";
+  if (n < 0) return "#ff3b3b";   // mínusz → piros
+  return "#f5d90a";             // plusz → sarga
+}
+
+function render(){
+const r = img.getBoundingClientRect();
+
+points.forEach(p=>{
+  if(!p.el) return;
+
+  const r = img.getBoundingClientRect();
+
+  const fnum = recalcF(p);
+  const snapped = snapF(fnum);
+
+  const zoneLabel = p.el.querySelector(".zoneLabel");
+  const fval = p.el.querySelector(".fval");
+
+  const z = formatZone(p.zone);
+  const off = zoneOffset(p);
+
+  // 🎯 ZONE FELÜL, kicsiben
+  if (z) {
+    zoneLabel.textContent = `${z} ${off}`;
+zoneLabel.style.color = zoneColor(off);
+  } else {
+    zoneLabel.textContent = "";
+  }
+
+  // 🎯 F-érték alul
+  fval.textContent = `ƒ / ${formatF(snapped)}`;
+
+  // COLOR
+const isExtreme = extremeF.has(snapped);
+const offVal = parseFloat(off);
+
+// 🔥 HIGHEST PRIORITY: extreme mindig felülír mindent
+if (isExtreme) {
+  p.el.style.background = "#24cfd1";
+  p.el.style.boxShadow = "0 0 0px rgba(255,0,0,0.4)";
+}
+else if (!isNaN(offVal) && offVal < 0) {
+  p.el.style.background = "#ff3b3b";
+  p.el.style.boxShadow = "0 0 12px rgba(255,0,0,0.25)";
+}
+else if (!isNaN(offVal) && offVal > 0) {
+  p.el.style.background = "#f5d90a";
+  p.el.style.boxShadow = "0 0 12px rgba(245,217,10,0.2)";
+}
+
+else {
+  p.el.style.background = "#2f8cff";
+  p.el.style.boxShadow = "none";
+}
+
+
+if (isExtreme) {
+  zoneLabel.textContent = "OUT OF RANGE";
+  zoneLabel.style.color = "#ff3b3b";
+}
+else if (z) {
+  zoneLabel.textContent = `${z} ${off}`;
+  zoneLabel.style.color = zoneColor(off);
+}
+else {
+  zoneLabel.textContent = "";
+}
+});
+
+
+
+const lat = getContrastEV();
+
+const latEl = document.getElementById("contrast");
+
+latEl.textContent = lat != null ? `LAT ${Number(lat).toFixed(1)}` : "LAT --";
+latEl.style.color = getLatColor(lat);
+}
+
+window.addEventListener("resize", render);
+img.onload = render;
+
+function openZoneMenu(point, x, y) {
+
+menu.innerHTML = "";
+menu.style.display = "block";
+
+const isMobile = window.innerWidth < 768;
+
+if (isMobile) {
+
+    menu.style.position = "fixed";
+    menu.style.left = "50%";
+    menu.style.top = "50%";
+    menu.style.transform = "translate(-50%, -50%)";
+    menu.style.width = "60%";
+    menu.style.maxWidth = "320px";
+    menu.style.maxHeight = "70vh";
+
+} else {
+
+    menu.style.position = "absolute";
+    menu.style.left = x + "px";
+    menu.style.top = y + "px";
+    menu.style.transform = "none";
+}
+
+zones.forEach(z => {
+    const div = document.createElement("div");
+    div.className = "menu-item";
+div.style.color = "white";
+    div.textContent = z;
+
+    // 🔥 default highlight ZONE V
+    if (z === point.zone) {
+        div.style.background = "rgba(47,140,255,0.25)";
+        div.style.fontWeight = "700";
+
+    }
+
+    div.onclick = () => {
+        const zoneIndex = zones.indexOf(z);
+const zoneV = zones.findIndex(z => z.includes("ZONE V"))
+point.zone = z;
+
+const zoneVIndex = zones.findIndex(z => z.includes("ZONE V"))
+point.zoneEV = zoneIndex - zoneVIndex;
+
+
+        menu.style.display = "none";
+        updateUI();
+    };
+
+    menu.appendChild(div);
+});
+
+// outside click close
+document.addEventListener("mousedown", function close(e){
+    if (!menu.contains(e.target)) {
+        menu.style.display = "none";
+        document.removeEventListener("mousedown", close);
+    }
+});
+}
+
+function recalcF(p){
+    // nagyon egyszerű EV-alapú korrekció (stabil, kiszámítható)
+
+    const isoRatio = Math.log2(p.iso / baseISO);
+
+    const shutterToSec = (v) => {
+        if (!v.includes("/")) return parseFloat(v);
+        const [a,b] = v.split("/");
+        return parseFloat(a)/parseFloat(b);
+    };
+
+    const baseT = shutterToSec(baseShutter);
+    const currentT = shutterToSec(p.shutter);
+
+    const shutterRatio = Math.log2(baseT / currentT);
+
+    // f-stop korrekció (EV)
+   const ev =
+  -isoRatio +
+  shutterRatio +
+  exposureComp +
+  (p.zoneEV || 0);
+
+    // f/ értékek log skálán mennek
+    // 1 stop = sqrt(2)
+    const baseFnum = parseFloat(p.baseF.replace("ƒ / ",""));
+
+    const newF = baseFnum * Math.pow(Math.sqrt(2), ev);
+
+return snapF(newF);
+}
+
+evSel.addEventListener("change",()=>{
+    exposureComp=Number(evSel.value);
+    updateUI();
+});
+
+
+isoSel.addEventListener("change", () => {
+    baseISO = Number(isoSel.value);
+    updateUI();
+});
+
+
+shSel.addEventListener("change", () => {
+    baseShutter = shSel.value;
+    updateUI();
+});
+
+
+async function exportImg(){
+
+const c = document.createElement("canvas");
+const ctx = c.getContext("2d");
+
+c.width = img.naturalWidth;
+c.height = img.naturalHeight;
+
+ctx.drawImage(img,0,0);
+
+/* =========================
+   HEADER
+========================= */
+
+const headerH = c.height / 20;
+
+ctx.fillStyle = "#0b0b0b";
+ctx.fillRect(0, 0, c.width, headerH);
+
+const lat = getContrastEV();
+const latNum = (lat != null && isFinite(lat)) ? Number(lat) : null;
+const latText = `LAT ${latNum != null ? latNum.toFixed(1) : "—"}`;
+
+function getLatColor(v){
+  if(v == null || !isFinite(v)) return "#ffffff";
+  if(v <= 8) return "#00ff6a";   // zöld
+  if(v <= 12) return "#ffffff";  // fehér
+  return "#ff3b3b";              // piros
+}
+
+const zoneV = "ZONE V";
+
+const currentZone = (() => {
+  const idx = zones.findIndex(z => z.includes("ZONE V")) + (exposureComp || 0);
+  return zones[Math.max(0, Math.min(zones.length - 1, idx))];
+})();
+
+const items = [
+  document.getElementById("project").value || "Untitled",
+  `ISO ${isoSel.value}`,
+  shSel.value,
+  /* currentZone */
+];
+/* layout */
+const headerFont = headerH * 0.38;
+
+ctx.font = `300 ${headerFont}px Arial`;
+ctx.textBaseline = "middle";
+ctx.textAlign = "center";
+
+const usableWidth = c.width * 0.80;
+const startX = (c.width - usableWidth) / 2;
+
+const total = items.length + 1; // + LAT
+const stepX = usableWidth / (total - 1);
+
+const y = headerH / 2;
+
+/* draw normal items */
+items.forEach((txt, i) => {
+  const x = startX + i * stepX;
+  ctx.fillStyle = "white";
+  ctx.fillText(txt, x, y);
+});
+
+
+
+/* LAT (SZÍNKEZELÉSSEL) */
+const latX = startX + items.length * stepX;
+
+
+
+ctx.fillStyle = getLatColor(latNum);
+ctx.fillText(latText, latX, y);
+
+
+
+/* reset */
+ctx.fillStyle = "white";
+
+const BASE_WIDTH = 2040;
+const scale = c.width / BASE_WIDTH;
+
+
+
+
+/* =========================
+   BUBBLES
+========================= */
+
+const uiScale = c.width / img.getBoundingClientRect().width;
+const baseFont = 14;
+
+const fontSize = baseFont * uiScale;
+const paddingX = 10 * uiScale;
+
+ctx.font = `${fontSize}px Arial`;
+ctx.textBaseline = "middle";
+
+points.forEach(p => {
+
+const x = p.x * c.width;
+const y = p.y * c.height;
+
+// 🔼 UI FELJEBB TOLÁS (csak vizuális layer)
+const uiScale = c.width / img.getBoundingClientRect().width;
+const lift = 22 * uiScale;
+const uiY = y - lift;
+
+// -------------------------
+// DATA
+// -------------------------
+
+const fnum = recalcF(p);
+const snapped = snapF(fnum);
+
+const isExtreme = (snapped === 0.6 || snapped === 257);
+
+const z = formatZone(p.zone);
+const off = zoneOffset(p);
+const offVal = parseFloat(off);
+const fText = `ƒ / ${formatF(snapped)}`;
+const zoneLabel = (z && off) ? `${z} ${off}` : (z ? `${z}` : "");
+
+
+// -------------------------
+// BUBBLE SIZE
+// -------------------------
+const textW = ctx.measureText(fText).width;
+const paddingX = 10 * uiScale;
+
+const fontSize = 14 * uiScale;
+
+const boxW = textW + paddingX * 2;
+const boxH = fontSize * 1.6;
+
+// -------------------------
+// ZONE LABEL (FELÜL)
+// -------------------------
+if (zoneLabel) {
+
+  const offVal = parseFloat(off);
+
+  let zoneColor = "rgba(255,255,255,0.85)";
+  if (!isNaN(offVal)) {
+    zoneColor = offVal < 0 ? "#ff3b3b" : "#f5d90a";
+  }
+
+  const zoneOffsetY = 12 * uiScale;
+
+  ctx.save();
+  ctx.font = `600 ${fontSize * 0.75}px Arial`;
+  ctx.textAlign = "center";
+  ctx.fillStyle = zoneColor;
+
+  ctx.fillText(zoneLabel, x, uiY - boxH / 2 - zoneOffsetY);
+
+  ctx.restore();
+}
+
+// -------------------------
+// BUBBLE
+// -------------------------
+if (isExtreme) {
+  ctx.fillStyle = "#24cfd1";
+  ctx.shadowColor = "rgba(255,0,0,0.4)";
+  ctx.shadowBlur = 0;
+}
+else if (!isNaN(offVal) && offVal < 0) {
+  ctx.fillStyle = "#ff3b3b";
+  ctx.shadowColor = "rgba(255,0,0,0.25)";
+  ctx.shadowBlur = 10;
+}
+else if (!isNaN(offVal) && offVal > 0) {
+  ctx.fillStyle = "#f5d90a";
+  ctx.shadowColor = "rgba(245,217,10,0.25)";
+  ctx.shadowBlur = 10;
+}
+else {
+  ctx.fillStyle = "#2f8cff";
+  ctx.shadowBlur = 0;
+}
+
+
+
+
+
+roundRect(
+  ctx,
+  x - boxW / 2,
+  uiY - boxH / 2,
+  boxW,
+  boxH,
+  fontSize * 0.4
+);
+ctx.fill();
+
+ctx.shadowBlur = 0;
+
+// text
+ctx.fillStyle = "white";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+ctx.fillText(fText, x, uiY);
+
+// -------------------------
+// 🔵 MARKER (EREDETI PONTON)
+// -------------------------
+ctx.save();
+ctx.beginPath();
+ctx.arc(x, y, 5 * uiScale, 0, Math.PI * 2);
+
+ctx.fillStyle = "#2f8cff";
+ctx.fillStyle = "transparent"; // nem kötelező, de tiszta
+
+ctx.lineWidth = 5 * scale;
+ctx.strokeStyle = "#2f8cff";
+ctx.stroke();
+
+ctx.restore();
+
+});
+/* =========================
+   EXPORT
+========================= */
+
+const blob = await new Promise(res => c.toBlob(res, "image/png"));
+const file = new File([blob], "spot-sketch.png", { type: "image/png" });
+
+if (window.showSaveFilePicker){
+
+try {
+  const handle = await window.showSaveFilePicker({
+    suggestedName: "spot-sketch.png",
+    types: [{
+      description: "PNG Image",
+      accept: { "image/png": [".png"] }
+    }]
+  });
+
+  const writable = await handle.createWritable();
+  await writable.write(file);
+  await writable.close();
+  return;
+
+} catch (e) {}
+}
+
+if (navigator.canShare && navigator.canShare({ files: [file] })){
+
+try {
+  await navigator.share({
+    files: [file],
+    title: "Spot Sketch"
+  });
+  return;
+} catch (e) {}
+}
+
+const url = URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "spot-sketch.png";
+a.click();
+URL.revokeObjectURL(url);
+
+}
+
+/* helper */
+function roundRect(ctx,x,y,w,h,r){
+ctx.beginPath();
+ctx.moveTo(x+r,y);
+ctx.arcTo(x+w,y,x+w,y+h,r);
+ctx.arcTo(x+w,y+h,x,y+h,r);
+ctx.arcTo(x,y+h,x,y,r);
+ctx.arcTo(x,y,x+w,y,r);
+ctx.closePath();
+}
+</script>
+
+</body>
+</html>
